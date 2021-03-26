@@ -1,0 +1,141 @@
+version: '3.7'
+services:
+#external API 
+  gateway:
+    build: 
+      context: ./gateway
+    #  target: development
+    restart: always
+    hostname: gateway
+    ports:
+      - "8000:8000"
+    networks:
+      - backend
+      - frontend
+    env_file:
+      - .env
+    volumes:
+      - ./gateway:/var/www/gateway
+      - ./gateway/node_modules:/var/www/gateway/node_modules
+    links:
+      - rabbitmq
+
+#guard 
+  token:
+    build:
+      context: ./token
+    #  target: development
+    restart: always
+    hostname: token
+    ports:
+      - "8002:8002"
+    env_file:
+      - .env
+    networks:
+      - backend
+    links:
+      - database
+      - rabbitmq
+    volumes:
+      - ./token:/var/www/token
+      - ./token/node_modules:/var/www/token/node_modules
+
+  permission:
+    build:
+      context: ./permission
+    #  target: development
+    restart: always
+    hostname: permission
+    ports:
+      - "8005:8005"
+    env_file:
+      - .env
+    networks:
+      - backend
+    links:
+      - rabbitmq
+    volumes:
+      - ./permission:/var/www/permission
+      - ./permission/node_modules:/var/www/permission/node_modules
+
+
+#Task 
+  user:
+    build:
+      context: ./user
+    #  target: development
+    restart: always
+    hostname: user
+    ports:
+      - "8006:8006"
+    networks:
+      - backend
+    env_file:
+      - .env
+    volumes:
+      - ./user:/var/www/user
+      - ./user/node_modules:/var/www/user/node_modules
+    links:
+    #  - mailer
+      - database
+      - rabbitmq
+
+  customer:
+    build:
+      context: ./customer
+    #  target: development
+    restart: always
+    hostname: customer
+    ports:
+      - "8007:8007"
+    networks:
+      - backend
+    env_file:
+      - .env
+    volumes:
+      - ./customer:/var/www/customer
+      - ./customer/node_modules:/var/www/customer/node_modules
+    links:
+    #  - mailer
+      - database
+      - rabbitmq
+
+
+#Message Broker 
+  rabbitmq:
+    image: rabbitmq:3.8-management-alpine
+    hostname: rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - backend
+      - frontend
+    env_file:
+      - .env
+
+#Database  
+  database:
+    image: mysql:latest
+    restart: always
+    ports:
+      - 3306:3306
+    networks:
+      - backend
+    env_file:
+      - .env
+    volumes:
+      - "./.docker/db/data/db-files:/data/db"
+      - "./.docker/db/init/:/docker-entrypoint-initdb.d/"
+
+
+#network  
+networks:
+  backend:
+    driver: bridge
+  frontend:
+    external:
+      name: infrastructure
+
+

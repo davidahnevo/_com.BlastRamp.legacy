@@ -33,5 +33,4 @@ lerna-debug.log*
 
 
 db/data
-.env
 .env.test
